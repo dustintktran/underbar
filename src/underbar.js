@@ -173,31 +173,17 @@
   //     return total + number * number;
   //   }); // should be 5, regardless of the iterator function passed in
   //          No accumulator is given so the first element is used.
-  _.reduce = function(collection, iterator, accumulator) {
-    var copyArray = [];
-    for(var i = 0; i < collection.length; i ++){
-      copyArray.push(collection[i]);
-    }
-    var reduced = 0;
-    if(accumulator == undefined){
-      var accum = copyArray.shift();
-      reduced = reduced + _.reduce(copyArray, iterator, accum);
-    } else if (collection.length > 0){
-      if(typeof collection[0] !== "number"){
-        iterator(accumulator, collection[0]);
-        return;
-      }
-      var accum = iterator(accumulator, copyArray.shift());
-      if(accum == undefined){
-        accum = iterator(accumulator, copyArray.shift());
-      }
-      reduced = reduced + _.reduce(copyArray, iterator, accum);
-    } else if(collection.length == 0){
-      reduced = accumulator;
-    }
-    return reduced;
-  };
 
+  _.reduce = function(collection, iterator, accumulator) {
+  _.each(collection, function(item) {   
+  if (accumulator === undefined) {
+        accumulator = item;
+      } else {
+        accumulator = iterator(accumulator, item);
+      }
+    });
+  return accumulator;
+  };
   // Determine if the array or object contains a given value (using `===`).
   _.contains = function(collection, target) {
     // TIP: Many iteration problems can be most easily expressed in
@@ -214,11 +200,42 @@
   // Determine whether all of the elements match a truth test.
   _.every = function(collection, iterator) {
     // TIP: Try re-using reduce() here.
+    var allTrue = true;
+    if(typeof iterator == "function"){
+      for(var i = 0; i < collection.length; i++){
+        if(iterator(collection[i]) == false || collection[i] == undefined){
+          allTrue = false;
+        }
+      }
+    } else {
+      for(var i = 0; i < collection.length; i++){
+        if(collection[i] == false){
+          allTrue = false;
+        }
+      }
+    }
+    
+    return allTrue;
   };
 
   // Determine whether any of the elements pass a truth test. If no iterator is
   // provided, provide a default one
   _.some = function(collection, iterator) {
+    var anyTrue = false;
+    if(typeof iterator == "function"){
+      for(var i = 0; i < collection.length; i++){
+        if(iterator(collection[i])){
+          anyTrue = true;
+        }
+      }
+    } else {
+      for(var i = 0; i < collection.length; i++){
+        if(collection[i]){
+          anyTrue = true;
+        }
+      }
+    }
+    return anyTrue;
     // TIP: There's a very clever way to re-use every() here.
   };
 
@@ -242,11 +259,31 @@
   //     bla: "even more stuff"
   //   }); // obj1 now contains key1, key2, key3 and bla
   _.extend = function(obj) {
+    var keyCheck = Object.keys(obj);
+    for(var i = 1; i < arguments.length; i++){
+      var addKeys = Object.keys(arguments[i]);
+      var addValues = Object.values(arguments[i]);
+      for(var j = 0; j < addKeys.length; j++){
+          obj[addKeys[j]] = addValues[j];
+      }
+    }
+    return obj;
   };
 
   // Like extend, but doesn't ever overwrite a key that already
   // exists in obj
   _.defaults = function(obj) {
+  var keyCheck = Object.keys(obj);
+    for(var i = 1; i < arguments.length; i++){
+      var addKeys = Object.keys(arguments[i]);
+      var addValues = Object.values(arguments[i]);
+      for(var j = 0; j < addKeys.length; j++){
+        if(!(_.contains(Object.keys(obj), addKeys[j]))){
+          obj[addKeys[j]] = addValues[j];
+        }
+      }
+    }
+    return obj;
   };
 
 
@@ -289,7 +326,15 @@
   // _.memoize should return a function that, when called, will check if it has
   // already computed the result for the given argument and return that value
   // instead if possible.
-  _.memoize = function(func) {
+  _.memoize = function(func, hasher) {
+    var memoize = function(key) {
+      var cache = memoize.cache;
+      var address = '' + (hasher ? hasher.apply(this, arguments) : key);
+      if (!(cache != null && hasOwnProperty.call(cache, address))/*!has(cache, address)*/) cache[address] = func.apply(this, arguments);
+      return cache[address];
+    };
+    memoize.cache = {};
+    return memoize;
   };
 
   // Delays a function for the given number of milliseconds, and then calls
@@ -299,6 +344,7 @@
   // parameter. For example _.delay(someFunction, 500, 'a', 'b') will
   // call someFunction('a', 'b') after 500ms
   _.delay = function(func, wait) {
+    setTimeout(func, wait, arguments[2],arguments[3]);
   };
 
 
