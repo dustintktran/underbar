@@ -352,13 +352,33 @@
    * ADVANCED COLLECTION OPERATIONS
    * ==============================
    */
-
+var random = function(a,b){
+  if(a > b){
+    return undefined;
+  } else if (a == b) {
+    return a;
+  } else {
+  var randomB = Math.floor(Math.random() * Math.floor(b));
+  if(randomB < a) {
+    randomB = random(a,b);
+  }
+  return randomB;
+  }
+}
   // Randomizes the order of an array's contents.
   //
   // TIP: This function's test suite will ask that you not modify the original
   // input array. For a tip on how to make a copy of an array, see:
   // http://mdn.io/Array.prototype.slice
   _.shuffle = function(array) {
+    var shuffled = array.slice();
+    for(var i = 0; i < shuffled.length; i++){
+      var rand = random(0, array.length-1);
+      var holder = shuffled[i];
+      shuffled[i] = shuffled[rand];
+      shuffled[rand] = holder;
+    }
+    return shuffled;
   };
 
 
